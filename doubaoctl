@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# 豆包语音输入服务控制脚本（基于 launchd，无窗口后台运行）
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+LABEL="com.tsai.doubao-voice"
+PLIST_PATH="${HOME}/Library/LaunchAgents/${LABEL}.plist"
+PY="${SCRIPT_DIR}/.venv/bin/python"
+MAIN="${SCRIPT_DIR}/main.py"
+LOG="${SCRIPT_DIR}/doubao_voice_input.log"
+UID_NUM="$(id -u)"
+DOMAIN="gui/${UID_NUM}"
+
+usage() {
+  cat <<USAGE
+用法: $(basename "$0") <command>
+
+命令:
+  install    安装 LaunchAgent 配置（首次使用前执行一次）
+  uninstall  卸载 LaunchAgent 配置
+  grant      打开系统设置协助授权（辅助功能 / 输入监控）
+  start      启动后台服务
+  stop       停止后台服务
+  restart    重启
+  status     查看运行状态
+  logs       实时跟随日志
+
+路径:
+  plist: ${PLIST_PATH}
+  log:   ${LOG}
+USAGE
+}
+
+gen_plist() {
+  cat > "${PLIST_PATH}" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${LABEL}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>${PY}</string>
+        <string>-u</string>
+        <string>${MAIN}</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>${SCRIPT_DIR}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>${LOG}</string>
+    <key>StandardErrorPath</key>
+    <string>${LOG}</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>
+EOF
+}
+
+ensure_installed() {
+  [[ -f "${PLIST_PATH}" ]] || { echo "❌ 尚未安装，请先执行: $(basename "$0") install"; exit 1; }
+}
+
+is_loaded() {
+  launchctl print "${DOMAIN}/${LABEL}" >/dev/null 2>&1
+}
+
+cmd_install() {
+  [[ -x "${PY}" ]] || { echo "❌ 找不到虚拟环境 Python：${PY}"; echo "请先在项目目录执行: uv sync"; exit 1; }
+  [[ -f "${MAIN}" ]] || { echo "❌ 找不到入口脚本：${MAIN}"; exit 1; }
+
+  mkdir -p "${HOME}/Library/LaunchAgents"
+  gen_plist
+  echo "✅ 已生成 ${PLIST_PATH}"
+
+  # TCC 认的是解析 symlink 后的真实路径，不是 .venv/bin/python
+  REAL_PY="$("${PY}" -c 'import os,sys;print(os.path.realpath(sys.executable))')"
+
+  cat <<NOTE
+
+首次运行需要授予以下权限（给这个真实路径，不是 .venv/bin/python）：
+  ${REAL_PY}
+
+  1. 辅助功能    系统设置 → 隐私与安全性 → 辅助功能      （发送 Cmd+V 必需）
+  2. 输入监控    系统设置 → 隐私与安全性 → 输入监控      （监听全局 F5 必需）
+  3. 麦克风      第一次录音时会自动弹窗请求
+
+快捷授权方式: $(basename "$0") grant
+授权完成后请执行: $(basename "$0") restart
+NOTE
+}
+
+cmd_grant() {
+  local real_py
+  real_py="$("${PY}" -c 'import os,sys;print(os.path.realpath(sys.executable))')"
+  echo "需要授权的二进制: ${real_py}"
+  echo "正在打开 Finder 定位 + 系统设置「辅助功能」面板..."
+  open -R "${real_py}"
+  sleep 0.3
+  open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+  cat <<NOTE
+
+操作步骤:
+  1. 在「辅助功能」面板点 + 号，把 Finder 里高亮的 python3.13 拖进去并开启
+  2. 切换到「输入监控」，同样把它加进去并开启
+  3. 执行: $(basename "$0") restart
+NOTE
+}
+
+cmd_uninstall() {
+  launchctl bootout "${DOMAIN}" "${PLIST_PATH}" 2>/dev/null || true
+  rm -f "${PLIST_PATH}"
+  echo "✅ 已卸载"
+}
+
+cmd_start() {
+  ensure_installed
+  launchctl bootout "${DOMAIN}" "${PLIST_PATH}" 2>/dev/null || true
+  launchctl bootstrap "${DOMAIN}" "${PLIST_PATH}"
+  : > "${LOG}"
+  launchctl kickstart -p "${DOMAIN}/${LABEL}" >/dev/null
+  sleep 0.4
+  if launchctl print "${DOMAIN}/${LABEL}" 2>/dev/null | grep -q 'state = running'; then
+    echo "✅ 已启动，日志文件：${LOG}"
+  else
+    echo "⚠️  启动似乎失败，最近日志："
+    tail -n 30 "${LOG}" || true
+    echo "--- 运行: $(basename "$0") status 查看详情"
+    exit 1
+  fi
+}
+
+cmd_stop() {
+  if [[ -f "${PLIST_PATH}" ]]; then
+    launchctl bootout "${DOMAIN}" "${PLIST_PATH}" 2>/dev/null || true
+  fi
+  echo "✅ 已停止"
+}
+
+cmd_restart() {
+  cmd_stop
+  sleep 0.3
+  cmd_start
+}
+
+cmd_status() {
+  if is_loaded; then
+    echo "● 运行中"
+    launchctl print "${DOMAIN}/${LABEL}" \
+      | awk '/state =|pid =|last exit code|program =/ {print "  " $0}'
+  else
+    echo "○ 未运行"
+  fi
+}
+
+cmd_logs() {
+  touch "${LOG}"
+  tail -n 100 -f "${LOG}"
+}
+
+case "${1:-}" in
+  install)   cmd_install ;;
+  uninstall) cmd_uninstall ;;
+  grant)     cmd_grant ;;
+  start)     cmd_start ;;
+  stop)      cmd_stop ;;
+  restart)   cmd_restart ;;
+  status)    cmd_status ;;
+  logs)      cmd_logs ;;
+  *)         usage; exit 1 ;;
+esac
