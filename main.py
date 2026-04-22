@@ -121,9 +121,26 @@ def parse_frame(data: bytes) -> tuple[str, dict]:
 
 
 def extract_text(obj: dict) -> str:
+    """
+    取完整累积文本。
+    豆包流式 ASR 一旦检测到句子切分，result.text 只会回当前这一句，
+    之前已经"定稿"的句子被塞到 result.utterances[] 里。
+    这里优先把 utterances[] 顺序拼接得到累积全量，utterances 缺失时再回落到 text。
+    """
     r = obj.get("result", "")
-    if isinstance(r, dict): return (r.get("text") or "").strip()
-    if isinstance(r, list): return "".join(i.get("text","") for i in r if isinstance(i,dict)).strip()
+    if isinstance(r, dict):
+        utterances = r.get("utterances")
+        if isinstance(utterances, list) and utterances:
+            full = "".join(
+                (u.get("text") or "")
+                for u in utterances
+                if isinstance(u, dict)
+            ).strip()
+            if full:
+                return full
+        return (r.get("text") or "").strip()
+    if isinstance(r, list):
+        return "".join(i.get("text","") for i in r if isinstance(i,dict)).strip()
     if isinstance(r, str):  return r.strip()
     return ""
 
@@ -361,8 +378,11 @@ async def recognize_streaming(
                 if kind == "result":
                     t = extract_text(payload.get("obj", {}))
                     if t:
-                        result_text = t
-                        on_partial(t)
+                        # 累积文本只允许增长 / 改写，不允许变短
+                        # （防止服务端切句后的某一帧只回当前句导致历史丢失）
+                        if len(t) >= len(result_text):
+                            result_text = t
+                            on_partial(result_text)
                     # flags 含 bit1（0x2）时一般为最后一包识别结果（文档 0b0011）
                     if payload.get("flags", 0) & 0x2:
                         break

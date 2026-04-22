@@ -1,145 +1,147 @@
-# HoldSay for Windows
+# HoldSay · Windows 使用说明
 
-> Mac 版用户请看 [`README.md`](./README.md)。
-> Windows 版通过另一套入口文件 `main_win.py` 和 PowerShell 控制脚本 `doubaoctl.ps1` 实现，**与 Mac 版共享 `.env` 配置，互不干扰**。
-
----
-
-## 🧰 系统要求
-
-- Windows 10 / 11（64 位）
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/) 包管理器
-
-  PowerShell 一行装：
-
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
+> 按住 **F2** 说话，松开后文字自动粘贴到光标位置。
+> 基于豆包（火山引擎）流式语音识别大模型。
 
 ---
 
-## 🚀 快速开始
+## 一键安装（推荐）
 
-### 1. 获取豆包凭证
+### ✅ 只需两步
 
-注册火山引擎 → 开通语音识别大模型 → 记下 `App ID` 和 `Access Token`。详见 [`README.md`](./README.md) 的"获取火山引擎凭证"一节。
+1. **下载/克隆本仓库到你自己的目录**（建议放 `D:\Tools\HoldSay` 之类的稳定路径，不要放桌面）。
+2. **双击 `setup.bat`**，按提示走完即可。
 
-### 2. 克隆仓库 + 配置凭证
+`setup.bat` 会自动帮你做完：
 
-```powershell
-git clone https://github.com/Tsai6688/HoldSayByDouBao.git
-cd HoldSayByDouBao
-copy .env.example .env
-notepad .env   # 填入 DOUBAO_APP_ID / DOUBAO_ACCESS_TOKEN
+| 步骤 | 做什么 |
+|---|---|
+| 1 | 检查 `uv`，如未安装会自动从官方源下载 |
+| 2 | 运行 `uv sync` 安装 Python 依赖 |
+| 3 | 向导式让你填入豆包 `APP_ID` / `ACCESS_TOKEN`，写入 `.env` |
+| 4 | 在"启动"文件夹创建快捷方式，开机自动运行 |
+| 5 | 立即以 `pythonw.exe` 后台启动（无黑窗口） |
+
+完成后：**按住 F2 说话，松开就行**。
+
+> ⚠️ 不要直接双击 `doubaoctl.ps1`！Windows 会用记事本打开它。
+> 入口永远是 **`setup.bat`**（首次）和 **`control.bat`**（日常）。
+
+---
+
+## 日常使用
+
+### 控制面板
+
+**双击 `control.bat`** 打开交互式菜单：
+
+```
+[1] 启动
+[2] 停止
+[3] 重启
+[4] 查看日志    (Ctrl+C 退出日志窗口，不会停止服务)
+[5] 重新向导式配置 (重写 .env)
+[6] 卸载        (移除开机自启，不删除代码)
+[0] 退出
 ```
 
-### 3. 装依赖
+### 快捷键
+
+| 按键 | 动作 |
+|---|---|
+| 按住 **F2** | 开始录音 |
+| 松开 **F2** | 停止录音 → 识别 → 自动粘贴（Ctrl+V）到光标位置 |
+
+---
+
+## 如何获取豆包凭证
+
+新用户有免费额度，够日常用很久。
+
+1. 注册 [火山引擎](https://www.volcengine.com/)
+2. 开通 **"语音识别大模型"** 服务
+3. 创建应用，勾选 **"流式语音识别（大模型）"**
+4. 在应用详情页复制 **App ID** 和 **Access Token**
+
+`setup.bat` 会在第一次运行时向导式询问这两个值。如果以后要换，双击 `control.bat` → `[5] 重新向导式配置`。
+
+---
+
+## 系统要求
+
+- **Windows 10 / 11**
+- **Python 3.11+**（如无，`uv` 会自动下载）
+- 麦克风
+- 联网（使用时需要访问豆包 WebSocket API）
+
+> 如果你没有 `uv`，`setup.bat` 会自动装。手动安装命令：
+> ```powershell
+> powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
+> ```
+
+---
+
+## 高级：命令行用法
+
+如果你更喜欢命令行，可以直接调用 `doubaoctl.ps1`：
 
 ```powershell
-uv sync
-```
-
-> `uv` 会在 `.venv\` 里创建独立 Python 环境，不污染系统。
-
-### 4. 允许 PowerShell 执行脚本（只需一次）
-
-默认 Windows 可能禁止运行本地 `.ps1`。用**管理员 PowerShell** 执行一次：
-
-```powershell
+# 首次使用前需要允许本地脚本执行（只需做一次）
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# 然后就能直接用
+.\doubaoctl.ps1 install     # 注册开机自启
+.\doubaoctl.ps1 start       # 启动
+.\doubaoctl.ps1 stop        # 停止
+.\doubaoctl.ps1 restart     # 重启
+.\doubaoctl.ps1 status      # 查状态
+.\doubaoctl.ps1 logs        # 实时日志
+.\doubaoctl.ps1 uninstall   # 移除开机自启
 ```
 
-（或者 `-Scope Process` 只对当前窗口生效，更保守）
+---
 
-### 5. 安装 + 启动
+## 工作原理
 
-```powershell
-.\doubaoctl.ps1 install   # 注册开机自启（在"启动"文件夹放快捷方式）
-.\doubaoctl.ps1 start     # 立即启动后台服务（pythonw.exe，无窗口）
-.\doubaoctl.ps1 logs      # 实时查看日志（Ctrl+C 退出日志不会停止服务）
+- **后台无窗口**：用 `pythonw.exe` 启动，不产生黑色命令行窗口。
+- **开机自启**：在 Windows "启动"文件夹 (`shell:startup`) 创建快捷方式。
+- **日志**：所有输出重定向到 `doubao_voice_input.log`，`control.bat → [4]` 可实时查看。
+- **休眠恢复**：用 `WM_POWERBROADCAST` 监听 Windows 电源事件，从休眠/睡眠恢复后自动重建热键监听，保证 F2 永远可用。
+- **凭证**：从 `.env` 读取，不会硬编码进代码，也不会被提交到 Git。
+
+---
+
+## 常见问题
+
+**Q: 双击 `.ps1` 被记事本打开了？**
+A: 这是 Windows 默认行为，**请不要双击 `.ps1` 文件**。统一使用 `setup.bat` 和 `control.bat`（双击即可运行）。
+
+**Q: 为什么按 F2 没反应？**
+A:
+1. 确认 `control.bat` 里状态是 `● 运行中`
+2. 看日志（`control.bat → [4]`）里有没有 `✅ 已就绪，按住 F2 说话`
+3. 某些游戏、全屏应用或以管理员权限运行的窗口会吞掉全局键盘事件，试试其它应用（记事本、浏览器）里测。
+4. 极少数笔记本 F2 被 BIOS/厂商热键软件占用，关掉 Fn 锁定或关掉 OEM 热键工具。
+
+**Q: 识别出来是空的？**
+A: 多半是麦克风没录到声音。Windows 设置 → 隐私和安全性 → 麦克风，允许应用访问。说话时观察日志里是否有 `🎤 采集`。
+
+**Q: 怎么换热键？**
+A: 编辑 `main_win.py` 顶部：
+```python
+HOTKEY = keyboard.Key.f2    # 改成 f3 / f4 / f6 ...
 ```
+然后双击 `control.bat → [3] 重启`。
+
+**Q: 要把它完全卸载？**
+A: 双击 `control.bat → [6] 卸载`，会停止服务并移除开机自启；然后直接删掉整个目录即可。
 
 ---
 
-## 🎤 使用
+## 问题反馈
 
-1. 光标焦点切到任意输入框（微信、浏览器、VSCode、记事本……）
-2. **按住** `F5`
-3. 看日志出现 `🔴 录音中...` 后说话
-4. 说完**松开** `F5`
-5. 文字自动粘贴到光标位置（Ctrl+V 由脚本模拟触发）
+在 GitHub 提 Issue，或带上日志：
 
----
-
-## 🛠 命令速查
-
-| 命令 | 作用 |
-|------|------|
-| `.\doubaoctl.ps1 install` | 注册开机自启（启动文件夹放 `HoldSay.lnk`） |
-| `.\doubaoctl.ps1 uninstall` | 移除开机自启 |
-| `.\doubaoctl.ps1 start` | 立即启动后台服务 |
-| `.\doubaoctl.ps1 stop` | 停止后台服务 |
-| `.\doubaoctl.ps1 restart` | 重启 |
-| `.\doubaoctl.ps1 status` | 查看状态（PID / 内存 / CPU / 是否自启） |
-| `.\doubaoctl.ps1 logs` | 实时跟随日志 |
-
----
-
-## 🔐 权限
-
-Windows 上**不需要** macOS 那一套 TCC 授权流程，但第一次录音时：
-
-- **麦克风弹窗**：同意即可（之后系统自动记住）
-- **Windows 11 的"麦克风访问"开关**：如果没弹窗且日志报麦克风错误，去 `系统设置 → 隐私和安全性 → 麦克风` 确认已开启"允许应用访问麦克风"以及"允许桌面应用访问麦克风"
-
-如果需要监听 **以管理员权限运行的程序**（比如某些 IDE 以管理员启动）的按键，HoldSay 自己也要以管理员运行。一般场景用不着。
-
----
-
-## 🛠 故障排查
-
-### 按 F5 完全没反应
-
-1. 查状态：`.\doubaoctl.ps1 status`，如果"未运行"就 `start`
-2. 查日志：`.\doubaoctl.ps1 logs`，看有没有报错堆栈
-
-### 能录音、识别成功，但没粘贴出来
-
-- 多半是目标 App 拦截了模拟按键（少见，比如 VMware 全屏、某些安全软件）。手动 Ctrl+V 能贴就证明识别正常。
-
-### `Start-Process` 报错 / 无法执行 .ps1
-
-- 执行策略问题。参见上面第 4 步：`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
-
-### 合盖/唤醒后失灵
-
-已内置 `WM_POWERBROADCAST` 监听，唤醒会自动重建键盘监听。如果偶发仍失灵：`.\doubaoctl.ps1 restart`。
-
-### 想改 F5 为别的热键
-
-编辑 `main_win.py` 顶部 `HOTKEY = keyboard.Key.f5`，然后 `.\doubaoctl.ps1 restart`。
-
-### pythonw 没输出日志
-
-`main_win.py` 启动时会自动把 stdout/stderr 重定向到 `doubao_voice_input.log`。如果还是没日志，可能是 venv 里的 `pythonw.exe` 路径不对，执行 `.\doubaoctl.ps1 status` 检查。
-
----
-
-## 📂 与 Mac 版的关系
-
-| 文件 | 平台 |
-|------|------|
-| `main.py` | macOS 专用 |
-| `main_win.py` | Windows 专用 |
-| `doubaoctl`（bash） | macOS |
-| `doubaoctl.ps1`（PowerShell） | Windows |
-| `.env` / `.env.example` / `pyproject.toml` / `uv.lock` | **共享** |
-
-两套代码目前平行演进，没有共享的 module。如果想 Mac / Windows 一键切换，可以在同一台开发机上切换 venv 后用对应的入口脚本。
-
----
-
-## 📝 License
-
-MIT — 同 Mac 版。
+```
+doubao_voice_input.log
+```

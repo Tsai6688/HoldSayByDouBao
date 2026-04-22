@@ -47,7 +47,7 @@ function Cmd-Install {
     $Shortcut.TargetPath       = $PythonW
     $Shortcut.Arguments        = "`"$MainPy`""
     $Shortcut.WorkingDirectory = $ScriptDir
-    $Shortcut.Description      = "HoldSay - 豆包语音输入（按住 F5 说话）"
+    $Shortcut.Description      = "HoldSay - 豆包语音输入（按住 F2 说话）"
     $Shortcut.Save()
 
     Write-Host "✅ 已创建开机启动快捷方式:" -ForegroundColor Green
@@ -169,11 +169,9 @@ function Show-Usage {
 
 日志文件: $LogPath
 
-首次使用：
-  1. uv sync                      # 装依赖（需要先装 uv）
-  2. copy .env.example .env       # 然后编辑 .env 填凭证
-  3. .\doubaoctl.ps1 install      # 创建开机自启
-  4. .\doubaoctl.ps1 start        # 立即启动
+首次使用（推荐）：
+  直接双击 setup.bat 一键完成安装配置。
+  日常控制请双击 control.bat。
 "@
 }
 
