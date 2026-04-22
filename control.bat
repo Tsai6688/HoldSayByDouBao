@@ -24,7 +24,8 @@ echo   [2] 停止
 echo   [3] 重启
 echo   [4] 查看日志   (Ctrl+C 退出日志窗口 , 不会停止服务)
 echo   [5] 重新向导式配置 (重写 .env)
-echo   [6] 卸载      (移除开机自启 , 不删除代码)
+echo   [6] 检查更新   (git pull + uv sync + 重启)
+echo   [7] 卸载      (移除开机自启 , 不删除代码)
 echo   [0] 退出
 echo ========================================================
 set "CHOICE="
@@ -35,7 +36,8 @@ if "!CHOICE!"=="2" goto do_stop
 if "!CHOICE!"=="3" goto do_restart
 if "!CHOICE!"=="4" goto do_logs
 if "!CHOICE!"=="5" goto do_reconfig
-if "!CHOICE!"=="6" goto do_uninstall
+if "!CHOICE!"=="6" goto do_update
+if "!CHOICE!"=="7" goto do_uninstall
 if "!CHOICE!"=="0" goto end
 goto menu
 
@@ -90,6 +92,11 @@ echo [OK] .env 已更新 , 正在重启服务以生效...
 powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0doubaoctl.ps1" restart
 echo.
 pause
+goto menu
+
+:do_update
+echo.
+call "%~dp0update.bat"
 goto menu
 
 :do_uninstall
