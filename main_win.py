@@ -323,7 +323,13 @@ async def recognize_streaming(
             "user":    {"uid": "win_voice_input"},
             "audio":   {"format": "pcm", "codec": "raw", "rate": SAMPLE_RATE,
                         "bits": 16, "channel": CHANNELS, "language": "zh-CN"},
-            "request": {"model_name": "bigmodel", "enable_punc": True, "result_type": "single"},
+            "request": {
+                "model_name":  "bigmodel",
+                "enable_punc": True,   # 自动加标点
+                "enable_ddc":  True,   # 语义顺滑：自动去除"嗯 / 呃 / 那个 / 就是"等口头禅
+                "enable_itn":  True,   # 反文本规范化：数字/日期/单位自动转阿拉伯写法
+                "result_type": "single",
+            },
         }))
 
         raw = await ws.recv()
