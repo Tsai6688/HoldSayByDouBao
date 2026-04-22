@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>HoldSay · 按住说，松开贴</title>
-<meta name="description" content="Mac 按住 F5 说话，松开自动识别并粘贴。基于豆包大模型。开源免费。" />
+<meta name="description" content="Mac 按住 F2 说话，松开自动识别并粘贴。基于豆包大模型。开源免费。" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@700;900&display=swap" rel="stylesheet">
@@ -307,7 +307,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
 
 <!-- 顶部滚动条（静态文字） -->
 <div class="marquee" role="banner">
-  <span>★ HOLDSAY <span class="dot">·</span> 按住 F5 说话 <span class="dot">·</span> 松开自动粘贴 <span class="dot">·</span> 豆包大模型 <span class="dot">·</span> 开源免费 <span class="dot">·</span> MAC ONLY <span class="dot">·</span> v0.1 ★ HOLDSAY · 按住 F5 说话 · 松开自动粘贴 · 豆包大模型 · 开源免费 · MAC ONLY · v0.1</span>
+  <span>★ HOLDSAY <span class="dot">·</span> 按住 F2 说话 <span class="dot">·</span> 松开自动粘贴 <span class="dot">·</span> 豆包大模型 <span class="dot">·</span> 开源免费 <span class="dot">·</span> MAC ONLY <span class="dot">·</span> v0.1 ★ HOLDSAY · 按住 F2 说话 · 松开自动粘贴 · 豆包大模型 · 开源免费 · MAC ONLY · v0.1</span>
 </div>
 
 <div class="wrap">
@@ -334,7 +334,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
       <span class="line2">&nbsp;SAY.&nbsp;</span>
     </h1>
     <p class="sub">
-      按住 <b>F5</b> 说话，松开——文字<b>直接出现在光标位置</b>。<br>
+      按住 <b>F2</b> 说话，松开——文字<b>直接出现在光标位置</b>。<br>
       基于字节豆包流式语音识别大模型，中文准确率肉眼可见。
     </p>
 
@@ -357,7 +357,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
     <div class="steps">
       <div class="step">
         <span class="n">01</span>
-        <h3>按住 F5</h3>
+        <h3>按住 F2</h3>
         <p>全局热键，任何 App 都能触发。</p>
         <span class="mono">🔴 录音中...</span>
       </div>
@@ -369,7 +369,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
       </div>
       <div class="step">
         <span class="n">03</span>
-        <h3>松开 F5</h3>
+        <h3>松开 F2</h3>
         <p>自动收尾，服务端返回最终结果。</p>
         <span class="mono">⏹ 收尾中...</span>
       </div>
@@ -397,7 +397,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
       <div class="card c-2">
         <span class="icon">🪵</span>
         <h3>后台常驻 · 零窗口</h3>
-        <p>macOS 原生 <b>launchd</b> 托管，开机不见踪影，按下 F5 立即响应。<br>
+        <p>macOS 原生 <b>launchd</b> 托管，开机不见踪影，按下 F2 立即响应。<br>
           <span class="mono" style="background:rgba(255,255,255,.08);padding:2px 6px">./doubaoctl start | stop | logs</span> 一行搞定。</p>
       </div>
       <div class="card c-3">
@@ -408,7 +408,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
       <div class="card c-4">
         <span class="icon">🛡</span>
         <h3>死锁兜底</h3>
-        <p>整体 30s 硬超时 + receiver 8s recv 保护，不会把 F5 锁死。</p>
+        <p>整体 30s 硬超时 + receiver 8s recv 保护，不会把 F2 锁死。</p>
       </div>
       <div class="card c-5">
         <span class="icon">🧠</span>
@@ -445,7 +445,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
 ./doubaoctl grant     <span class="c"># 打开系统设置协助授权（辅助功能 / 输入监控）</span>
 ./doubaoctl start
 
-<span class="c"># 完事。按住 F5 试试。</span></pre>
+<span class="c"># 完事。按住 F2 试试。</span></pre>
   </section>
 
   <!-- CTA -->
@@ -465,7 +465,7 @@ footer .made{font-family:"Archivo Black",sans-serif;font-size:15px;letter-spacin
     <div class="cta-side">
       <div class="kv"><span class="k">License</span><span class="v">MIT</span></div>
       <div class="kv"><span class="k">Platform</span><span class="v">macOS 11+</span></div>
-      <div class="kv"><span class="k">Hotkey</span><span class="v">F5 · 可改</span></div>
+      <div class="kv"><span class="k">Hotkey</span><span class="v">F2 · 可改</span></div>
       <div class="kv"><span class="k">ASR</span><span class="v">豆包大模型</span></div>
       <div class="kv"><span class="k">Price</span><span class="v" style="color:var(--red)">FREE</span></div>
     </div>

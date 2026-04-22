@@ -60,7 +60,7 @@ if not APP_ID or not TOKEN:
 SAMPLE_RATE = 16000
 CHANNELS    = 1
 CHUNK_MS    = 100   # 发送粒度，小一点让最后一包更快到
-HOTKEY      = keyboard.Key.f5
+HOTKEY      = keyboard.Key.f2
 
 # ── 二进制帧编解码 ──────────────────────────────────────────────────
 
@@ -434,7 +434,7 @@ def main():
     print("=" * 40)
     print("  豆包语音输入 for Mac")
     print("=" * 40)
-    print("✅ 已就绪，按住 F5 说话，松开后自动识别并粘贴")
+    print("✅ 已就绪，按住 F2 说话，松开后自动识别并粘贴")
     print("按 Ctrl+C 退出")
 
     wake_event = threading.Event()
